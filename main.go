@@ -25,10 +25,11 @@ type ParsedLog struct {
 }
 
 func (l ParsedLog) headline() string {
-	var headlineItems = make([]string, 3)
-	headlineItems = append(headlineItems, fmt.Sprintf("%s\t%s\t%s", l.responseCode, l.method, l.url))
+	var headlineItems = make([]string, 0)
+	url_parts := strings.Split(l.url, "?")
+	headlineItems = append(headlineItems, fmt.Sprintf("%s %s %s", l.responseCode, l.method, url_parts[0]))
 	if l.responseTime != "" {
-		headlineItems = append(headlineItems, fmt.Sprintf("\nin %sms", l.responseTime))
+		headlineItems = append(headlineItems, fmt.Sprintf("in %sms", l.responseTime))
 	}
 	if l.genesisTotalResponseTime != "" {
 		headlineItems = append(headlineItems, fmt.Sprintf("api:%sms", l.genesisTotalResponseTime))
