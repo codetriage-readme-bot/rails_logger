@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/hpcloud/tail"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -26,8 +28,20 @@ type ParsedLog struct {
 
 func (l ParsedLog) headline() string {
 	var headlineItems = make([]string, 0)
-	url_parts := strings.Split(l.url, "?")
-	headlineItems = append(headlineItems, fmt.Sprintf("%s %s %s", l.responseCode, l.method, url_parts[0]))
+	var responseCode string
+	urlParts := strings.Split(l.url, "?")
+	statusCode, _ := strconv.Atoi(l.responseCode)
+	if statusCode < 300 {
+		responseCode = color.GreenString(l.responseCode)
+	} else if statusCode >= 300 && statusCode < 400 {
+		responseCode = color.CyanString(l.responseCode)
+	} else if statusCode >= 400 && statusCode < 500 {
+		responseCode = color.YellowString(l.responseCode)
+	} else {
+		responseCode = color.RedString(l.responseCode)
+	}
+	url := color.WhiteString(urlParts[0])
+	headlineItems = append(headlineItems, fmt.Sprintf("%12s %4s %s", responseCode, l.method, url))
 	if l.responseTime != "" {
 		headlineItems = append(headlineItems, fmt.Sprintf("in %sms", l.responseTime))
 	}
@@ -39,16 +53,16 @@ func (l ParsedLog) headline() string {
 
 func (l LogItem) parsedLog() ParsedLog {
 	log := new(ParsedLog)
-	var started_regex = regexp.MustCompile(`Started (\w+) "(.*?)" for ([a-zA-Z:0-9\.]*) at (.*)`)
-	if started_regex.MatchString(l.rawData) {
-		var matches = started_regex.FindStringSubmatch(l.rawData)
+	var startedRegex = regexp.MustCompile(`Started (\w+) "(.*?)" for ([a-zA-Z:0-9\.]*) at (.*)`)
+	if startedRegex.MatchString(l.rawData) {
+		var matches = startedRegex.FindStringSubmatch(l.rawData)
 		log.url = matches[2]
 		log.method = matches[1]
 		log.timestamp = matches[4]
 	}
-	var completed_regex = regexp.MustCompile(`Completed\s*(?P<response_code>\w+)\s*(?P<response_description>[\w\s]+) in (?P<response_time>\d+)ms(?:\s\(Genesis: (?P<genesis_total_response_time>\d+\.\d*)ms\))?`)
-	if completed_regex.MatchString(l.rawData) {
-		var matches = completed_regex.FindStringSubmatch(l.rawData)
+	var completedRegex = regexp.MustCompile(`Completed\s*(?P<response_code>\w+)\s*(?P<response_description>[\w\s]+) in (?P<response_time>\d+)ms(?:\s\(Genesis: (?P<genesis_total_response_time>\d+\.\d*)ms\))?`)
+	if completedRegex.MatchString(l.rawData) {
+		var matches = completedRegex.FindStringSubmatch(l.rawData)
 		log.responseCode = matches[1]
 		log.responseTime = matches[3]
 		log.genesisTotalResponseTime = matches[4]
