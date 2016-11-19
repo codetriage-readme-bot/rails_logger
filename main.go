@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/hpcloud/tail"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -82,7 +83,7 @@ func main() {
 }
 
 func parser() {
-	t, err := tail.TailFile("./sample.log", tail.Config{Follow: true})
+	t, err := tail.TailFile(os.Args[1], tail.Config{Follow: true})
 	if err != nil {
 		panic(err)
 	}
